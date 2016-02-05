@@ -22,6 +22,7 @@ namespace ofxHDF5
     {
     public:
         File();
+        File(const string& filename, bool bReadOnly = false);
         ~File();
 
         bool open(const string& filename, bool bReadOnly = false);

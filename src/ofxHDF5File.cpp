@@ -17,6 +17,13 @@ namespace ofxHDF5
     }
 
     //--------------------------------------------------------------
+    File::File(const string& filename, bool bReadOnly)
+    : File()
+    {
+        open(filename, bReadOnly);
+    }
+
+    //--------------------------------------------------------------
     File::~File()
     {
         close();
