@@ -14,6 +14,7 @@ namespace ofxHDF5
     DataSet::DataSet()
     : _numDimensions(0)
     , _dimensions(nullptr)
+    , _dataType(H5_DATATYPE_INT32)
     {
 
     }
@@ -52,7 +53,48 @@ namespace ofxHDF5
         try {
             h5_dataSet = fg->openDataSet(name);
 
-            _dataType = (DataType)h5_dataSet.getTypeClass();
+            // Get the data type.
+            H5T_class_t typeClass = h5_dataSet.getTypeClass();
+            if (typeClass == H5T_INTEGER) {
+                H5::IntType intType = h5_dataSet.getIntType();
+                _dataSize= intType.getSize();
+                H5T_sign_t intSign = intType.getSign();
+                if (intSign == H5T_SGN_NONE) {
+                    if (_dataSize <= 8) {
+                        _dataType = H5_DATATYPE_UCHAR;
+                    }
+                    else if (_dataSize <= 32) {
+                        _dataType = H5_DATATYPE_UINT32;
+                    }
+                    else {
+                        _dataType = H5_DATATYPE_UINT64;
+                    }
+                }
+                else {
+                    if (_dataSize <= 8) {
+                        _dataType = H5_DATATYPE_CHAR;
+                    }
+                    else if (_dataSize <= 32) {
+                        _dataType = H5_DATATYPE_INT32;
+                    }
+                    else {
+                        _dataType = H5_DATATYPE_INT64;
+                    }
+                }
+            }
+            else if (typeClass == H5T_FLOAT) {
+                H5::FloatType floatType = h5_dataSet.getFloatType();
+                _dataSize = floatType.getSize();
+                if (_dataSize <= 32) {
+                    _dataType = H5_DATATYPE_FLOAT;
+                }
+                else {
+                    _dataType = H5_DATATYPE_DOUBLE;
+                }
+            }
+            else {
+                ofLogError("DataSet::open") << "Unsupported type class " << typeClass;
+            }
 
             // Get the data space.
             h5_dataSpace = h5_dataSet.getSpace();
@@ -73,18 +115,32 @@ namespace ofxHDF5
             }
 
             string typeString = "";
-            switch (_dataType) {
-                case DATA_TYPE_INTEGER:
-                    typeString = "int";
-                    break;
-
-                case DATA_TYPE_FLOAT:
-                    typeString = "float";
-                    break;
-
-                default:
-                    typeString = "???";
-                    break;
+            if (_dataType == H5_DATATYPE_CHAR) {
+                typeString = "char";
+            }
+            else if (_dataType == H5_DATATYPE_UCHAR) {
+                typeString = "uchar";
+            }
+            else if (_dataType == H5_DATATYPE_INT32) {
+                typeString = "int32";
+            }
+            else if (_dataType == H5_DATATYPE_INT64) {
+                typeString = "int64";
+            }
+            else if (_dataType == H5_DATATYPE_UINT32) {
+                typeString = "uint32";
+            }
+            else if (_dataType == H5_DATATYPE_UINT64) {
+                typeString = "uint64";
+            }
+            else if (_dataType == H5_DATATYPE_FLOAT) {
+                typeString = "float";
+            }
+            else if (_dataType == H5_DATATYPE_DOUBLE) {
+                typeString = "double";
+            }
+            else {
+                typeString = "???";
             }
 
             string dimsString = "";
@@ -183,19 +239,7 @@ namespace ofxHDF5
         }
         H5::DataSpace readSpace(_numDimensions, readSize);
 
-        H5::DataType memType;
-        switch (_dataType) {
-            default:
-            case DATA_TYPE_INTEGER:
-                memType = H5::PredType::NATIVE_INT;
-                break;
-                
-            case DATA_TYPE_FLOAT:
-                memType = H5::PredType::NATIVE_FLOAT;
-                break;
-        }
-
-        h5_dataSet.read(buffer, memType, readSpace, h5_dataSpace);
+        h5_dataSet.read(buffer, _dataType, readSpace, h5_dataSpace);
 
         delete [] readSize;
     }
