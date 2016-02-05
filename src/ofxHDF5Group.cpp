@@ -72,7 +72,13 @@ namespace ofxHDF5
     }
 
     //--------------------------------------------------------------
-    H5::Group& Group::getH5()
+    H5::CommonFG * Group::getH5CommonPtr()
+    {
+        return &h5_group;
+    }
+
+    //--------------------------------------------------------------
+    H5::Group& Group::getH5Group()
     {
         return h5_group;
     }

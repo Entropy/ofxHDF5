@@ -8,15 +8,27 @@ void ofApp::setup()
     ofSetLogLevel(OF_LOG_VERBOSE);
 
     string filename = "snap_000.0.hdf5";
-    string groupName = "PartType1";
-    string dataSetName = "Coordinates";
-
     hdf5File.open(filename, true);
+    cout << "File '" << filename << "' has " << hdf5File.getNumGroups() << " groups and " << hdf5File.getNumDataSets() << " datasets" << endl;
+    for (int i = 0; i < hdf5File.getNumGroups(); ++i) {
+        cout << "  Group " << i << ": " << hdf5File.getGroupName(i) << endl;
+    }
+    for (int i = 0; i < hdf5File.getNumDataSets(); ++i) {
+        cout << "  DataSet " << i << ": " << hdf5File.getDataSetName(i) << endl;
+    }
+
+    string groupName = hdf5File.getGroupName(1);
     ofxHDF5GroupPtr group = hdf5File.loadGroup(groupName);
+    cout << "Group '" << groupName << "' has " << hdf5File.getNumDataSets() << " datasets" << endl;
+    for (int i = 0; i < group->getNumDataSets(); ++i) {
+        cout << "  DataSet " << i << ": " << group->getDataSetName(i) << endl;
+    }
+
+    string dataSetName = group->getDataSetName(0);
     ofxHDF5DataSetPtr dataSet = group->loadDataSet(dataSetName);
 
     int offset = 0;
-    int count = 1024 * 128;
+    int count = dataSet->getDimensionSize(0);
     int stride = 1;
     dataSet->setHyperslab(offset, count, stride);
 

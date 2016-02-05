@@ -76,4 +76,16 @@ namespace ofxHDF5
         }
         return nullptr;
     }
+
+    //--------------------------------------------------------------
+    H5::CommonFG * File::getH5CommonPtr()
+    {
+        return &h5_file;
+    }
+
+    //--------------------------------------------------------------
+    H5::H5File& File::getH5File()
+    {
+        return h5_file;
+    }
 }

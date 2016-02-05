@@ -8,8 +8,6 @@
 
 #pragma once
 
-#include "H5Cpp.h"
-
 #include "ofMain.h"
 
 #include "ofxHDF5Container.h"
@@ -29,7 +27,8 @@ namespace ofxHDF5
         virtual GroupPtr loadGroup(const string& name);
         virtual DataSetPtr loadDataSet(const string& name);
 
-        H5::Group& getH5();
+        virtual H5::CommonFG *getH5CommonPtr();
+        H5::Group& getH5Group();
 
     protected:
         H5::Group h5_group;

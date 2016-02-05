@@ -15,6 +15,7 @@ namespace ofxHDF5
 {
     //--------------------------------------------------------------
     Container::Container()
+    : _bNeedsChildInfo(true)
     {
 
     }
@@ -35,6 +36,10 @@ namespace ofxHDF5
         for (auto& it : _dataSets) {
             it.second->close();
         }
+
+        _groupNames.clear();
+        _dataSetNames.clear();
+        _bNeedsChildInfo = true;
     }
 
     //--------------------------------------------------------------
@@ -59,5 +64,53 @@ namespace ofxHDF5
             ofLogError("ofxHDF5::Container::dataSet") << "Could not find DataSet with name " << name;
             return nullptr;
         }
+    }
+
+    //--------------------------------------------------------------
+    void Container::_getChildInfo()
+    {
+        if (_bNeedsChildInfo) {
+            int num = getH5CommonPtr()->getNumObjs();
+            for (int i = 0; i < num; ++i) {
+                string name = getH5CommonPtr()->getObjnameByIdx(i);
+                H5G_obj_t type = getH5CommonPtr()->getObjTypeByIdx(i);
+                if (type == H5G_GROUP) {
+                    _groupNames.push_back(name);
+                }
+                else if (type == H5G_DATASET) {
+                    _dataSetNames.push_back(name);
+                }
+            }
+
+            _bNeedsChildInfo = false;
+        }
+    }
+
+    //--------------------------------------------------------------
+    int Container::getNumGroups()
+    {
+        _getChildInfo();
+        return _groupNames.size();
+    }
+
+    //--------------------------------------------------------------
+    int Container::getNumDataSets()
+    {
+        _getChildInfo();
+        return _dataSetNames.size();
+    }
+
+    //--------------------------------------------------------------
+    const string& Container::getGroupName(int i)
+    {
+        _getChildInfo();
+        return _groupNames[i];
+    }
+
+    //--------------------------------------------------------------
+    const string& Container::getDataSetName(int i)
+    {
+        _getChildInfo();
+        return _dataSetNames[i];
     }
 }
