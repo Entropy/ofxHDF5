@@ -23,8 +23,6 @@
 
 namespace ofxHDF5
 {
-    typedef H5::PredType DataType;
-
     class DataSet
     {
     public:
@@ -34,7 +32,7 @@ namespace ofxHDF5
         bool open(const string& name, H5::CommonFG *fg);
         void close();
 
-        DataType getDataType();
+        H5::DataType getDataType();
         size_t getDataSize();
 
         int getNumDimensions();
@@ -45,15 +43,18 @@ namespace ofxHDF5
         void resetHyperslab();
 
         void read(void *buffer);
+        void read(void *buffer, H5::DataType dataType);
 
         H5::DataSet& getH5();
 
     protected:
+        string getTypeString(const H5::IntType& intType);
+        string getTypeString(const H5::FloatType& floatType);
+        string getTypeString(const H5::CompType& compType);
+
         H5::DataSet h5_dataSet;
         H5::DataSpace h5_dataSpace;
-
-        DataType _dataType;
-        size_t _dataSize;
+        H5::DataType h5_dataType;
 
         int _numDimensions;
         hsize_t *_dimensions;

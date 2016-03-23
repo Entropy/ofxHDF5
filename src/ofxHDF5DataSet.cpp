@@ -14,7 +14,7 @@ namespace ofxHDF5
     DataSet::DataSet()
     : _numDimensions(0)
     , _dimensions(nullptr)
-    , _dataType(H5_DATATYPE_INT32)
+    , h5_dataType(H5_DATATYPE_INT32)
     {
 
     }
@@ -54,43 +54,22 @@ namespace ofxHDF5
             h5_dataSet = fg->openDataSet(name);
 
             // Get the data type.
+            string typeString = "???";
             H5T_class_t typeClass = h5_dataSet.getTypeClass();
             if (typeClass == H5T_INTEGER) {
                 H5::IntType intType = h5_dataSet.getIntType();
-                _dataSize= intType.getSize();
-                H5T_sign_t intSign = intType.getSign();
-                if (intSign == H5T_SGN_NONE) {
-                    if (_dataSize <= 8) {
-                        _dataType = H5_DATATYPE_UCHAR;
-                    }
-                    else if (_dataSize <= 32) {
-                        _dataType = H5_DATATYPE_UINT32;
-                    }
-                    else {
-                        _dataType = H5_DATATYPE_UINT64;
-                    }
-                }
-                else {
-                    if (_dataSize <= 8) {
-                        _dataType = H5_DATATYPE_CHAR;
-                    }
-                    else if (_dataSize <= 32) {
-                        _dataType = H5_DATATYPE_INT32;
-                    }
-                    else {
-                        _dataType = H5_DATATYPE_INT64;
-                    }
-                }
+                typeString = getTypeString(intType);
+                h5_dataType = intType;
             }
             else if (typeClass == H5T_FLOAT) {
                 H5::FloatType floatType = h5_dataSet.getFloatType();
-                _dataSize = floatType.getSize();
-                if (_dataSize <= 32) {
-                    _dataType = H5_DATATYPE_FLOAT;
-                }
-                else {
-                    _dataType = H5_DATATYPE_DOUBLE;
-                }
+                typeString = getTypeString(floatType);
+                h5_dataType = floatType;
+            }
+            else if (typeClass == H5T_COMPOUND) {
+                H5::CompType compType = h5_dataSet.getCompType();
+                typeString = getTypeString(compType);
+                h5_dataType = compType;
             }
             else {
                 ofLogError("DataSet::open") << "Unsupported type class " << typeClass;
@@ -112,35 +91,6 @@ namespace ofxHDF5
                 _offset[i] = 0;
                 _stride[i] = 1;
                 _block[i] = 1;
-            }
-
-            string typeString = "";
-            if (_dataType == H5_DATATYPE_CHAR) {
-                typeString = "char";
-            }
-            else if (_dataType == H5_DATATYPE_UCHAR) {
-                typeString = "uchar";
-            }
-            else if (_dataType == H5_DATATYPE_INT32) {
-                typeString = "int32";
-            }
-            else if (_dataType == H5_DATATYPE_INT64) {
-                typeString = "int64";
-            }
-            else if (_dataType == H5_DATATYPE_UINT32) {
-                typeString = "uint32";
-            }
-            else if (_dataType == H5_DATATYPE_UINT64) {
-                typeString = "uint64";
-            }
-            else if (_dataType == H5_DATATYPE_FLOAT) {
-                typeString = "float";
-            }
-            else if (_dataType == H5_DATATYPE_DOUBLE) {
-                typeString = "double";
-            }
-            else {
-                typeString = "???";
             }
 
             string dimsString = "";
@@ -165,9 +115,73 @@ namespace ofxHDF5
     }
 
     //--------------------------------------------------------------
-    DataType DataSet::getDataType()
+    string DataSet::getTypeString(const H5::IntType& intType)
     {
-        return _dataType;
+        string str = "";
+
+        H5T_sign_t sign = intType.getSign();
+        if (sign != H5T_SGN_NONE) {
+            str += "u";
+        }
+
+        size_t size = intType.getSize();
+        if (size == 1) {
+            str += "char";
+        }
+        else if (size <= 4) {
+            str += "int32";
+        }
+        else {
+            str += "int64";
+        }
+
+        return str;
+    }
+
+    //--------------------------------------------------------------
+    string DataSet::getTypeString(const H5::FloatType& floatType)
+    {
+        size_t size = floatType.getSize();
+        if (size <= 4) {
+            return "float";
+        }
+        return "double";
+    }
+
+    //--------------------------------------------------------------
+    string DataSet::getTypeString(const H5::CompType& compType)
+    {
+        string str = "compound (";
+
+        for (int i = 0; i < compType.getNmembers(); ++i) {
+            H5T_class_t memberClass = compType.getMemberClass(i);
+            if (memberClass == H5T_INTEGER) {
+                H5::IntType intType = h5_dataSet.getIntType();
+                str += getTypeString(intType);
+            }
+            else if (memberClass == H5T_FLOAT) {
+                H5::FloatType floatType = h5_dataSet.getFloatType();
+                str += getTypeString(floatType);
+            }
+            if (i < compType.getNmembers() - 1) {
+                str += " ";
+            }
+        }
+
+        str += ")";
+        return str;
+    }
+
+    //--------------------------------------------------------------
+    H5::DataType DataSet::getDataType()
+    {
+        return h5_dataType;
+    }
+
+    //--------------------------------------------------------------
+    size_t DataSet::getDataSize()
+    {
+        return h5_dataType.getSize();
     }
 
     //--------------------------------------------------------------
@@ -233,13 +247,20 @@ namespace ofxHDF5
     //--------------------------------------------------------------
     void DataSet::read(void *buffer)
     {
+        // Use native data type.
+        read(buffer, h5_dataType);
+    }
+
+    //--------------------------------------------------------------
+    void DataSet::read(void *buffer, H5::DataType dataType)
+    {
         hsize_t *readSize = new hsize_t[_numDimensions];
         for (int i = 0; i < _numDimensions; ++i) {
             readSize[i] = _count[i] * (_block? _block[i] : 1);
         }
         H5::DataSpace readSpace(_numDimensions, readSize);
 
-        h5_dataSet.read(buffer, _dataType, readSpace, h5_dataSpace);
+        h5_dataSet.read(buffer, dataType, readSpace, h5_dataSpace);
 
         delete [] readSize;
     }
