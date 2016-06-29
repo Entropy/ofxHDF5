@@ -108,7 +108,7 @@ namespace ofxHDF5
                 error.printError();
             }
             ofLogError("ofxHDF5::DataSet::open") << "Data Set " << name << " not found!";
-            return nullptr;
+			return false;
         }
 
         return true;
