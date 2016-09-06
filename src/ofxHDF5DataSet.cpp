@@ -251,19 +251,30 @@ namespace ofxHDF5
         read(buffer, h5_dataType);
     }
 
-    //--------------------------------------------------------------
-    void DataSet::read(void *buffer, H5::DataType dataType)
-    {
-        hsize_t *readSize = new hsize_t[_numDimensions];
-        for (int i = 0; i < _numDimensions; ++i) {
-            readSize[i] = _count[i] * (_block? _block[i] : 1);
-        }
-        H5::DataSpace readSpace(_numDimensions, readSize);
+	//--------------------------------------------------------------
+	void DataSet::read(void *buffer, H5::DataType dataType)
+	{
+		hsize_t *readSize = new hsize_t[_numDimensions];
+		for (int i = 0; i < _numDimensions; ++i)
+		{
+			readSize[i] = _count[i] * (_block ? _block[i] : 1);
+		}
+		H5::DataSpace readSpace(_numDimensions, readSize);
 
-        h5_dataSet.read(buffer, dataType, readSpace, h5_dataSpace);
+		try
+		{
+			h5_dataSet.read(buffer, dataType, readSpace, h5_dataSpace);
+		}
+		catch (H5::DataSetIException error)
+		{
+			ofLogError(__FUNCTION__) << "Could not read data!";
+			if (ofGetLogLevel() == OF_LOG_VERBOSE) {
+				error.printError();
+			}
+		}
 
-        delete [] readSize;
-    }
+		delete[] readSize;
+	}
 
     //--------------------------------------------------------------
     H5::DataSet& DataSet::getH5()
