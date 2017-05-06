@@ -10,6 +10,11 @@
 
 #include "ofxHDF5DataSet.h"
 #include "ofxHDF5Group.h"
+#include "H5Cpp.h"
+
+#include "ofLog.h"
+
+using namespace std;
 
 namespace ofxHDF5
 {

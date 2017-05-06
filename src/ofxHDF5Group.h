@@ -8,10 +8,16 @@
 
 #pragma once
 
-#include "ofMain.h"
+#include <string>
 
 #include "ofxHDF5Container.h"
 #include "ofxHDF5DataSet.h"
+
+namespace H5
+{
+	class CommonFG;
+	class Group;
+}
 
 namespace ofxHDF5
 {
@@ -21,16 +27,16 @@ namespace ofxHDF5
         Group();
         ~Group();
 
-        bool open(const string& name, H5::CommonFG *fg);
+        bool open(const std::string& name, H5::CommonFG *fg);
         virtual void close();
 
-        virtual GroupPtr loadGroup(const string& name);
-        virtual DataSetPtr loadDataSet(const string& name);
+        virtual GroupPtr loadGroup(const std::string& name);
+        virtual DataSetPtr loadDataSet(const std::string& name);
 
         virtual H5::CommonFG *getH5CommonPtr();
         H5::Group& getH5Group();
 
     protected:
-        H5::Group h5_group;
+        std::unique_ptr<H5::Group> h5_group;
     };
 }

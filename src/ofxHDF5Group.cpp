@@ -7,11 +7,16 @@
 //
 
 #include "ofxHDF5Group.h"
+#include "ofLog.h"
+#include "H5Cpp.h"
+
+using namespace std;
 
 namespace ofxHDF5
 {
     //--------------------------------------------------------------
     Group::Group()
+	:h5_group(new H5::Group)
     {
 
     }
@@ -27,7 +32,7 @@ namespace ofxHDF5
     {
         Container::close();
 
-        h5_group.close();
+        h5_group->close();
     }
 
     //--------------------------------------------------------------
@@ -36,7 +41,7 @@ namespace ofxHDF5
         close();
 
         try {
-            h5_group = fg->openGroup(name);
+            *h5_group = fg->openGroup(name);
         }
         catch (H5::GroupIException error) {
             if (ofGetLogLevel() == OF_LOG_VERBOSE) {
@@ -53,7 +58,7 @@ namespace ofxHDF5
     GroupPtr Group::loadGroup(const string& name)
     {
         GroupPtr group = GroupPtr(new Group());
-        if (group->open(name, &h5_group)) {
+        if (group->open(name, h5_group.get())) {
             _groups[name] = group;
             return group;
         }
@@ -64,7 +69,7 @@ namespace ofxHDF5
     DataSetPtr Group::loadDataSet(const string& name)
     {
         DataSetPtr dataSet = DataSetPtr(new DataSet());
-        if (dataSet->open(name, &h5_group)) {
+        if (dataSet->open(name, h5_group.get())) {
             _dataSets[name] = dataSet;
             return dataSet;
         }
@@ -74,12 +79,12 @@ namespace ofxHDF5
     //--------------------------------------------------------------
     H5::CommonFG * Group::getH5CommonPtr()
     {
-        return &h5_group;
+        return h5_group.get();
     }
 
     //--------------------------------------------------------------
     H5::Group& Group::getH5Group()
     {
-        return h5_group;
+        return *h5_group;
     }
 }

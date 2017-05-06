@@ -8,11 +8,16 @@
 
 #pragma once
 
-#include "ofMain.h"
+#include <string>
 
 #include "ofxHDF5Container.h"
 #include "ofxHDF5DataSet.h"
 #include "ofxHDF5Group.h"
+
+namespace H5
+{
+	class H5File;
+}
 
 namespace ofxHDF5
 {
@@ -20,19 +25,19 @@ namespace ofxHDF5
     {
     public:
         File();
-        File(const string& filename, bool bReadOnly = false);
+        File(const std::string& filename, bool bReadOnly = false);
         ~File();
 
-        bool open(const string& filename, bool bReadOnly = false);
+        bool open(const std::string& filename, bool bReadOnly = false);
         virtual void close();
 
-        virtual GroupPtr loadGroup(const string& name);
-        virtual DataSetPtr loadDataSet(const string& name);
+        virtual GroupPtr loadGroup(const std::string& name);
+        virtual DataSetPtr loadDataSet(const std::string& name);
 
         virtual H5::CommonFG *getH5CommonPtr();
         H5::H5File& getH5File();
 
     protected:
-        H5::H5File h5_file;
+        std::unique_ptr<H5::H5File> h5_file;
     };
 }

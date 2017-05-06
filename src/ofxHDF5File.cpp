@@ -7,18 +7,23 @@
 //
 
 #include "ofxHDF5File.h"
+#include "ofUtils.h"
+#include "H5Cpp.h"
+
+using namespace std;
 
 namespace ofxHDF5
 {
     //--------------------------------------------------------------
     File::File()
+		:h5_file(new H5::H5File)
     {
 
     }
 
     //--------------------------------------------------------------
     File::File(const string& filename, bool bReadOnly)
-    : File()
+    :h5_file(new H5::H5File)
     {
         open(filename, bReadOnly);
     }
@@ -34,7 +39,7 @@ namespace ofxHDF5
     {
         Container::close();
 
-        h5_file.close();
+        h5_file->close();
     }
 
     //--------------------------------------------------------------
@@ -44,7 +49,7 @@ namespace ofxHDF5
 
         string filePath = ofToDataPath(filename);
         try {
-            h5_file.openFile(filePath, bReadOnly? H5F_ACC_RDONLY:H5F_ACC_RDWR);
+            h5_file->openFile(filePath, bReadOnly? H5F_ACC_RDONLY:H5F_ACC_RDWR);
         }
         catch (H5::FileIException error) {
             if (ofGetLogLevel() == OF_LOG_VERBOSE) {
@@ -59,7 +64,7 @@ namespace ofxHDF5
     GroupPtr File::loadGroup(const string& name)
     {
         GroupPtr group = GroupPtr(new Group());
-        if (group->open(name, &h5_file)) {
+        if (group->open(name, h5_file.get())) {
             _groups[name] = group;
             return group;
         }
@@ -70,7 +75,7 @@ namespace ofxHDF5
     DataSetPtr File::loadDataSet(const string& name)
     {
         DataSetPtr dataSet = DataSetPtr(new DataSet());
-        if (dataSet->open(name, &h5_file)) {
+        if (dataSet->open(name, h5_file.get())) {
             _dataSets[name] = dataSet;
             return dataSet;
         }
@@ -80,12 +85,12 @@ namespace ofxHDF5
     //--------------------------------------------------------------
     H5::CommonFG * File::getH5CommonPtr()
     {
-        return &h5_file;
+        return h5_file.get();
     }
 
     //--------------------------------------------------------------
     H5::H5File& File::getH5File()
     {
-        return h5_file;
+        return *h5_file;
     }
 }
