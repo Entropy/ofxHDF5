@@ -58,6 +58,7 @@ namespace ofxHDF5
             ofLogError("ofxHDF5::load") << "File " << filename << " not found or not HDF5!";
             return false;
         }
+		return true;
     }
 
     //--------------------------------------------------------------
